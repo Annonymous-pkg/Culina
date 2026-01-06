@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Générateur de recettes intelligent",
-  "main": "index.html",
   "scripts": {
-    "start": "serve .",
-    "build": "echo 'No build step required for this ESM project'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "culina",
@@ -17,6 +17,13 @@
   "author": "Quentin Noel",
   "license": "MIT",
   "dependencies": {
-    "serve": "^14.2.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^5.0.0",
+    "typescript": "^5.0.0"
   }
 }

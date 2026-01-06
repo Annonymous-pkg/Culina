@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Culina • Vision Pro Quentin Noel</title>
-    
-    <meta name="description" content="L'Oracle de Vision Culinaire : Analyse Vidéo par Quentin Noel.">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#050505">
-    
+    <meta name="description" content="L'Oracle de Vision Culinaire : Analyse Vidéo par Quentin Noel." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#050505" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,900;1,400;1,900&family=Inter:wght@100;300;400;600;900&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --obsidian: #050505;
@@ -20,7 +17,6 @@
             --gold-leaf: #C5A059;
             --fluid-ease: cubic-bezier(0.2, 1, 0.2, 1);
         }
-
         body {
             background-color: var(--obsidian);
             color: var(--marble-beige);
@@ -29,54 +25,44 @@
             overflow-x: hidden;
             overscroll-behavior-y: none;
         }
-
         .marble-bg {
-            background-image: 
+            background-image:
                 radial-gradient(circle at 10% 10%, rgba(245, 245, 220, 0.03) 0%, transparent 40%),
                 radial-gradient(circle at 90% 90%, rgba(197, 160, 89, 0.01) 0%, transparent 40%),
                 url('https://www.transparenttextures.com/patterns/black-mamba.png');
             background-attachment: fixed;
         }
-
         .glass-island {
             background: rgba(10, 10, 10, 0.85);
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
             border: 0.5px solid rgba(245, 245, 220, 0.08);
         }
-
         .text-palace {
             font-family: 'Playfair Display', serif;
             letter-spacing: -0.04em;
         }
-
         .glow-beige {
             text-shadow: 0 0 30px rgba(245, 245, 220, 0.15);
         }
-
         .ios-reveal {
             animation: iosReveal 0.8s var(--fluid-ease) forwards;
         }
-
         @keyframes iosReveal {
             from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
             to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
-
         ::-webkit-scrollbar { display: none; }
-        
         .premium-input {
             background: rgba(245, 245, 220, 0.01);
             border: 1px solid rgba(245, 245, 220, 0.06);
             transition: all 0.4s var(--fluid-ease);
         }
-
         .premium-input:focus {
             background: rgba(245, 245, 220, 0.04);
             border-color: var(--gold-leaf);
             box-shadow: 0 0 40px rgba(197, 160, 89, 0.05);
         }
-
         .custom-scroll::-webkit-scrollbar {
             width: 2px;
             display: block;
@@ -86,23 +72,9 @@
             border-radius: 10px;
         }
     </style>
-
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.34.0",
-    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
-  }
-}
-</script>
 </head>
 <body class="marble-bg min-h-screen">
     <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
