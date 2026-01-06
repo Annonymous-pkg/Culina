@@ -15,10 +15,6 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": [
-    "food",
-    "lifestyle",
-    "productivity"
-  ],
+  "categories": ["food", "lifestyle", "productivity"],
   "requestFramePermissions": []
 }
