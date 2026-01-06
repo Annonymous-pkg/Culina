@@ -50,66 +50,27 @@ const App = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Updated generate() to call serverless proxy /api/genai
   const generate = async () => {
     if (!videoUrl) return;
     setLoading(true);
     try {
-      let GoogleGenAI: any = null;
-      try {
-        const mod = await import('@google/genai');
-        GoogleGenAI = mod?.GoogleGenAI ?? mod?.default?.GoogleGenAI ?? mod?.default ?? null;
-      } catch (err) {
-        console.warn('Impossible de charger @google/genai dans le navigateur', err);
-      }
-
-      if (!GoogleGenAI) {
-        alert("La bibliothèque d'analyse IA n'est pas disponible dans le navigateur. Utilisez un backend ou configurez un endpoint serveur.");
-        setLoading(false);
-        return;
-      }
-
-      const ai = new GoogleGenAI({ apiKey: (import.meta.env.VITE_API_KEY || '') });
-      const prompt = `
-        RÔLE : Ingénieur Culinaire de Palace.
-        TÂCHE : Analyse cette vidéo : ${videoUrl}
-        OBJECTIF : Précision chirurgicale pour Quentin Noel.
-        INSTRUCTIONS :
-        1. Identifie chaque aliment visible.
-        2. Liste le MATÉRIEL TECHNIQUE nécessaire.
-        3. Quantifie précisément les ingrédients.
-        4. Découpe le protocole en étapes avec des noms de techniques clairs.
-        
-        FORMAT JSON REQUIS :
-        {
-          "title": "Nom du plat",
-          "description": "Pitch court et luxueux",
-          "prepTime": "Temps estimé",
-          "servings": "Nombre de personnes",
-          "ingredients": [{"item": "nom", "qty": "quantité", "note": "précision"}],
-          "equipment": ["Liste du matériel requis"],
-          "steps": [{"action": "description précise", "duration": "temps", "technique": "nom de la technique"}],
-          "visionAnalysis": "Secrets détectés et style du chef",
-          "chefTips": ["Astuces de pro"]
-        }
-      `;
-
-      const res = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: prompt,
-        config: { 
-          responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 3000 }
-        }
+      const res = await fetch('/api/genai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoUrl })
       });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Erreur serveur');
 
-      const data = JSON.parse(res.text || '{}');
+      const data = json.recipe || {};
       setRecipe({ ...data, id: Date.now().toString() });
       setVideoUrl('');
-      window.scrollTo({top: 0, behavior: 'smooth'});
-      notify("Analyse terminée avec succès.");
-    } catch (e) {
-      console.error(e);
-      alert("Erreur d'analyse. Lien invalide, clé API manquante ou endpoint inaccessible.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      notify('Analyse terminée avec succès.');
+    } catch (e: any) {
+      console.error('Analyse error:', e);
+      alert('Erreur d\'analyse : ' + (e?.message || String(e)));
     } finally {
       setLoading(false);
     }
@@ -117,22 +78,22 @@ const App = () => {
 
   const exportRecipe = () => {
     if (!recipe) {
-      notify("Aucune recette à exporter.");
+      notify('Aucune recette à exporter.');
       return;
     }
     const dataStr = JSON.stringify(recipe, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
+    const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
     link.download = `Culina_Protocole_${recipe.title.replace(/\s+/g, '_')}.json`;
     link.click();
-    notify("Fichier JSON exporté.");
+    notify('Fichier JSON exporté.');
   };
 
   const downloadSourceFiles = async () => {
     const files = ['index.html', 'index.tsx', 'manifest.json', 'package.json', 'metadata.json'];
-    notify("Préparation du téléchargement...");
+    notify('Préparation du téléchargement...');
     
     for (const file of files) {
       try {
@@ -152,7 +113,7 @@ const App = () => {
         console.error(`Impossible de télécharger ${file}`, e);
       }
     }
-    notify("Fichiers sources téléchargés.");
+    notify('Fichiers sources téléchargés.');
   };
 
   const save = () => {
@@ -160,7 +121,7 @@ const App = () => {
     const next = [recipe, ...savedRecipes].slice(0, 20);
     setSavedRecipes(next);
     localStorage.setItem('culina_vision_v3', JSON.stringify(next));
-    notify("Ajouté aux archives.");
+    notify('Ajouté aux archives.');
   };
 
   return (
@@ -199,7 +160,6 @@ const App = () => {
         </div>
       </nav>
 
-      {/* Hero and rest of UI (unchanged) */}
       {!recipe && !loading && (
         <section className="pt-32 md:pt-56 pb-20 px-6 max-w-7xl mx-auto ios-reveal">
           <div className="text-center space-y-10 md:space-y-16">
@@ -243,7 +203,170 @@ const App = () => {
         </section>
       )}
 
-      {/* Remainder of file unchanged; using same UI as original index.tsx */}
+      {recipe && !loading && (
+        <section className="pt-28 md:pt-40 pb-40 px-6 max-w-7xl mx-auto ios-reveal">
+          <div className="space-y-20 md:space-y-32">
+            <div className="text-center space-y-6 md:space-y-10">
+              <div className="inline-block px-4 py-1.5 rounded-full border border-[#C5A059]/20 text-[#C5A059] text-[8px] font-black tracking-[0.4em] uppercase">Protocole Certifié #{recipe.id?.slice(-4)}</div>
+              <h2 className="text-palace text-4xl md:text-8xl lg:text-9xl italic font-black leading-tight tracking-tighter text-white break-words glow-beige px-4">{recipe.title}</h2>
+              <div className="h-[0.5px] w-32 bg-gradient-to-r from-transparent via-[#C5A059]/40 to-transparent mx-auto"></div>
+              <p className="max-w-3xl mx-auto text-lg md:text-2xl font-light text-[#F5F5DC]/40 italic leading-relaxed px-4">{recipe.description}</p>
+            </div>
+
+            <div className="grid lg:grid-cols-12 gap-12 md:gap-24 items-start">
+              <div className="lg:col-span-5 space-y-12 md:space-y-16 lg:sticky lg:top-32 px-4">
+                <div className="space-y-8">
+                  <h3 className="text-[10px] font-black tracking-[0.5em] text-[#C5A059] uppercase">Matière Première</h3>
+                  <div className="space-y-5">
+                    {recipe.ingredients.map((ing, i) => (
+                      <div key={i} className="flex flex-col border-b border-white/5 pb-5 group">
+                        <div className="flex justify-between items-end mb-1 gap-3">
+                          <span className="text-lg md:text-xl font-bold text-white/80 group-hover:text-white transition-all tracking-tight">{ing.item}</span>
+                          <span className="text-base font-light text-[#C5A059]/60 shrink-0">{ing.qty}</span>
+                        </div>
+                        {ing.note && <span className="text-[10px] font-light text-[#F5F5DC]/30 italic uppercase tracking-widest">{ing.note}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {recipe.equipment && (
+                  <div className="space-y-6 p-7 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-white/[0.02] border border-white/5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Utensils size={14} className="text-[#C5A059]" />
+                      <h3 className="text-[9px] font-black tracking-[0.3em] text-[#C5A059] uppercase">Matériel Technique</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      {recipe.equipment.map((item, i) => (
+                        <span key={i} className="px-3.5 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[10px] font-medium text-white/40">{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-7 space-y-16 md:space-y-24 px-4">
+                <h3 className="text-[10px] font-black tracking-[0.5em] text-[#C5A059] uppercase">Protocole d'Exécution</h3>
+                <div className="space-y-16 md:space-y-28">
+                  {recipe.steps.map((step, i) => (
+                    <div key={i} className="group flex gap-6 md:gap-12">
+                      <div className="flex flex-col items-center">
+                        <span className="text-4xl md:text-6xl font-palace italic text-white/5 group-hover:text-[#C5A059]/30 transition-all duration-1000 leading-none">{i+1}</span>
+                        <div className="w-[1px] h-full bg-gradient-to-b from-white/10 to-transparent mt-6 md:mt-10"></div>
+                      </div>
+                      <div className="pt-1.5 md:pt-3 space-y-3 md:space-y-5">
+                        <span className="text-[8px] font-black tracking-[0.2em] text-[#C5A059]/40 uppercase group-hover:text-[#C5A059] transition-colors">{step.technique}</span>
+                        <p className="text-lg md:text-2xl font-light text-[#F5F5DC]/60 group-hover:text-white transition-all duration-1000 leading-snug">{step.action}</p>
+                        {step.duration && <div className="inline-flex items-center gap-2 text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] bg-white/5 px-3 py-1.5 rounded-full">⌛ {step.duration}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 glass-island px-6 md:px-10 py-4 md:py-5 rounded-full flex gap-8 md:gap-14 shadow-2xl items-center z-[200]">
+              <button onClick={save} className="text-white/30 hover:text-[#C5A059] transition-all flex items-center gap-2.5 group">
+                <Bookmark size={20} className="group-hover:fill-[#C5A059]/20" /> 
+                <span className="hidden sm:block text-[9px] font-black tracking-[0.1em] uppercase">Archiver</span>
+              </button>
+              
+              <button onClick={exportRecipe} className="text-white/30 hover:text-[#F5F5DC] transition-all flex items-center gap-2.5 group">
+                <Download size={20} /> 
+                <span className="hidden sm:block text-[9px] font-black tracking-[0.1em] uppercase">Exporter</span>
+              </button>
+
+              <div className="w-px h-6 bg-white/10"></div>
+
+              <button onClick={() => setRecipe(null)} className="bg-[#F5F5DC] text-black w-10 h-10 rounded-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl">
+                <Plus size={22} className="rotate-45" />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {showPremium && (
+        <div className="fixed inset-0 z-[400] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-6 ios-reveal">
+          <div className="glass-island p-10 md:p-14 rounded-[3rem] max-w-lg w-full text-center space-y-8 border border-[#C5A059]/30 overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#C5A059] to-transparent"></div>
+            <Crown size={64} className="text-[#C5A059] mx-auto animate-bounce drop-shadow-[0_0_20px_rgba(197,160,89,0.4)]" />
+            <div className="space-y-4">
+              <h2 className="text-palace text-4xl text-white italic">Statut Prestige</h2>
+              <div className="h-px w-20 bg-[#C5A059]/20 mx-auto"></div>
+              <p className="text-[#F5F5DC]/60 text-xs md:text-sm leading-relaxed uppercase tracking-[0.3em]">
+                Accès privilégié à l'Oracle v4.0 activé. <br/>
+                Propulsé par Google Gemini Pro pour la Maison Quentin Noel.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-left">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                <p className="text-[8px] font-black text-[#C5A059] uppercase tracking-widest">Capacité IA</p>
+                <p className="text-white text-xs font-bold">Illimitée</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                <p className="text-[8px] font-black text-[#C5A059] uppercase tracking-widest">Priorité</p>
+                <p className="text-white text-xs font-bold">Critique</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-4">
+              <button 
+                onClick={downloadSourceFiles}
+                className="w-full py-4 bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all rounded-2xl flex items-center justify-center gap-3 group"
+              >
+                <FileCode size={16} className="text-[#C5A059] group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Télécharger le Projet (.zip)</span>
+              </button>
+              
+              <button 
+                onClick={() => setShowPremium(false)} 
+                className="w-full py-5 bg-[#C5A059] text-black font-black uppercase tracking-[0.4em] rounded-2xl text-[10px] hover:scale-105 transition-all active:scale-95"
+              >
+                Retour à l'Oracle
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showHistory && (
+        <div className="fixed inset-0 z-[300] bg-black/98 backdrop-blur-[60px] flex items-center justify-center p-6 md:p-16 ios-reveal">
+          <div className="w-full max-w-2xl space-y-12">
+            <div className="flex justify-between items-center border-b border-white/10 pb-8">
+              <span className="text-[10px] font-black tracking-[0.5em] text-[#C5A059] uppercase">Archives Vision</span>
+              <button onClick={() => setShowHistory(false)} className="text-white/20 hover:text-white transition-all bg-white/5 p-3 rounded-full"><X size={24}/></button>
+            </div>
+            <div className="space-y-8 max-h-[50vh] overflow-y-auto pr-4 custom-scroll">
+              {savedRecipes.length === 0 ? (
+                <p className="text-center text-white/10 text-[9px] tracking-[1em] uppercase py-10 italic">Le Vault est vide</p>
+              ) : (
+                savedRecipes.map((r, i) => (
+                  <div key={i} onClick={() => {setRecipe(r); setShowHistory(false);}} className="group flex justify-between items-center cursor-pointer border-b border-white/5 pb-6 hover:border-[#C5A059]/40 transition-all">
+                    <span className="text-xl md:text-4xl font-palace italic text-white/30 group-hover:text-white transition-all">{r.title}</span>
+                    <ArrowUpRight size={18} className="opacity-0 group-hover:opacity-100 transition-all text-[#C5A059]" />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 z-[1000] bg-black/95 flex flex-col items-center justify-center space-y-12 p-10">
+           <div className="w-24 h-24 relative">
+             <div className="absolute inset-0 border-[0.5px] border-[#C5A059]/20 rounded-full scale-150"></div>
+             <div className="absolute inset-0 border-t-2 border-[#C5A059] rounded-full animate-spin"></div>
+             <ChefHat size={40} className="text-[#C5A059] absolute inset-0 m-auto animate-pulse" />
+           </div>
+           <div className="text-center space-y-4">
+             <p className="text-[11px] font-black tracking-[0.8em] text-[#C5A059] uppercase animate-pulse">Décodage Moléculaire</p>
+             <p className="text-[8px] font-bold tracking-[0.3em] text-white/20 uppercase max-w-[250px] mx-auto leading-loose">Analyse IA des matières premières et du matériel technique en cours...</p>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
